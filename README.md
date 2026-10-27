@@ -1,89 +1,86 @@
 # Chess Bot
 
-Moteur de jeu d'échecs codé en C avec interface en ligne de commande interactive et persistance des données via SQLite.
+Un jeu d'échecs complet développé en C avec interface graphique (SDL2), moteur de jeu (IA) et persistance des données (SQLite).
 
-## Description
+---
 
-Ce projet implémente un jeu d'échecs complet exécutable directement dans le terminal. Il prend en charge l'initialisation de l'échiquier, la vérification des règles et la validation des déplacements de chaque pièce. Il intègre également un shell interactif pour piloter la partie et une base SQLite embarquée permettant d'enregistrer l'historique des coups joués.
+## 📋 Fonctionnalités
 
-## Fonctionnalités
+- **Moteur d'échecs & IA** : Algorithmes d'évaluation et de calcul des déplacements (`engine.c`, `deplacement.c`, `board.c`).
+- **Interface Graphique (GUI)** : Rendu visuel de l'échiquier et interaction à la souris via **SDL2** et **SDL2_image** (`gui.c`).
+- **Base de données** : Sauvegarde et gestion des données via **SQLite** (`database.c`, `setup_db.c`, `sqlite3.c`).
 
-* **Plateau de jeu interactif** : modélisation de la grille 8x8 et affichage matriciel en console avec actualisation après chaque action.
-* **Moteur de règles** :
-  * Validation des trajectoires propres à chaque pièce (pions, cavaliers, fous, tours, dame, roi).
-  * Détection des obstacles, des prises et des coups illégaux.
-  * Gestion du tour par tour entre les Blancs et les Noirs.
-* **Interface console (CLI)** :
-  * Boucle de jeu interactive avec invites de commande claires.
-  * Analyse syntaxique des coordonnées saisies par les joueurs.
-* **Persistance des données avec SQLite** :
-  * Initialisation automatique des tables via `setup_db1.c`.
-  * Enregistrement systématique des coups et des données de session en base locale.
+---
 
-## Architecture du code
+## 🛠️ Prérequis
 
-* `board.c` / `board.h` : structures de données représentant l'échiquier, placement initial des pièces et fonctions d'affichage.
-* `deplacement.c` / `deplacement.h` : algorithmes de calcul de légalité des déplacements et contraintes géométriques du jeu.
-* `shell.c` : point d'entrée du programme (`main`), gestion des entrées utilisateur et boucle principale de la partie.
-* `setup_db1.c` : fonctions d'interfaçage avec SQLite (création de la base, requêtes SQL d'insertion et de consultation).
-* `sqlite3.c` / `sqlite3.h` / `sqlite3ext.h` : code source complet du moteur SQLite3 inclus directement au projet pour éviter toute dépendance externe.
+Le projet est configuré pour être compilé sous Windows avec **MinGW-w64** (via [MSYS2](https://www.msys2.org/)).
 
-## Prérequis
-
-* Un compilateur C compatible C99 ou supérieur (`gcc` ou `clang`).
-* L'outil Git pour cloner le dépôt.
-
-## Compilation et exécution
-
-### 1. Récupération du dépôt
+Assurez-vous d'avoir installé les paquets nécessaires (GCC, SDL2, SDL2_image) :
 
 ```bash
-git clone [https://github.com/jamesduburcq/chess_bot.git](https://github.com/jamesduburcq/chess_bot.git)
-cd chess_bot
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image
 ```
 
-### 2. Compilation
+---
 
-Sous **Windows** (PowerShell ou Invite de commandes avec GCC / MinGW) :
+## 🚀 Compilation et Exécution
+
+### 1. Initialiser la base de données
+
+Avant de lancer le jeu, compilez et exécutez le script d'initialisation de la base SQLite :
 
 ```bash
-gcc -Wall -Wextra shell.c board.c deplacement.c setup_db1.c sqlite3.c -o chess_bot.exe
+gcc setup_db.c sqlite3.c -o setup_db.exe
+./setup_db.exe
 ```
 
-Sous **Linux** ou **macOS** :
+### 2. Compiler le jeu graphique
+
+Compilez l'ensemble des modules du jeu avec les optimisations et les bibliothèques requises :
 
 ```bash
-gcc -Wall -Wextra shell.c board.c deplacement.c setup_db1.c sqlite3.c -o chess_bot -lpthread -ldl
+gcc board.c deplacement.c engine.c database.c gui.c sqlite3.c \
+    -o jeu_graphique \
+    -O3 \
+    -w \
+    -I/mingw64/include/SDL2 \
+    -L/mingw64/lib \
+    -D_REENTRANT \
+    -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lpthread -lm
 ```
 
-### 3. Lancement du jeu
+> **Détail des options :**
+> - `-O3` : Optimisation maximale du code (essentiel pour la vitesse de calcul du bot).
+> - `-w` : Désactive les avertissements du compilateur.
+> - `-I/mingw64/include/SDL2` et `-L/mingw64/lib` : Chemins vers les en-têtes et bibliothèques SDL2.
+> - `-lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lpthread -lm` : Dépendances graphiques, multithreading et mathématiques.
 
-Sous Windows :
+### 3. Lancer le jeu
 
-```powershell
-.\chess_bot.exe
-```
-
-Sous Linux ou macOS :
+Une fois la compilation terminée avec succès, exécutez le programme :
 
 ```bash
-./chess_bot
+./jeu_graphique.exe
 ```
 
-## Déroulement d'une partie
+---
 
-1. Le programme démarre en générant la base de données locale si elle n'existe pas encore.
-2. L'échiquier s'affiche avec le repère de colonnes (lettres `a` à `h`) et de rangées (chiffres `1` à `8`).
-3. Les joueurs cliquent sur les pièces pour les déplacer.
-4. Le moteur valide la conformité du coup, met à jour le plateau et stocke le mouvement dans la base de données.
+## 📁 Structure du projet
 
-## Équipe
+```text
+├── board.c          # Représentation et gestion du plateau d'échecs
+├── deplacement.c    # Règles de déplacement des pièces et validation des coups
+├── engine.c         # Moteur de réflexion / IA du bot
+├── gui.c            # Rendu visuel et gestion des événements (SDL2)
+├── database.c       # Requêtes et interactions avec la base SQLite
+├── setup_db.c       # Script d'initialisation de la base de données
+├── sqlite3.c        # Moteur SQLite (amalgamation)
+└── sqlite3.h        # En-tête SQLite
+```
 
-Projet développé en collaboration par :
+---
 
-* **James Duburcq** ([@jamesduburcq](https://github.com/jamesduburcq))
-* Collaborateurs du projet
+## 👤 Auteur
 
-## Licence
-
-Ce projet est distribué sous licence open source libre. Le moteur embarqué SQLite relève quant à lui du domaine public.
+- GitHub : [@jamesduburcq](https://github.com/jamesduburcq)
